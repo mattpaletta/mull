@@ -10,6 +10,12 @@ on:
       - "mull_test.bzl"
       - "examples/integration_api/**"
       - ".github/workflows/integration-api.yml"
+env:
+  # mull_test compiles its instrumented sources with -fpass-plugin=, which is
+  # a clang-only flag. Force the bazel auto-detected cc toolchain to pick
+  # clang-19 instead of the system gcc.
+  CC: clang-19
+  CXX: clang++-19
 jobs:
   load-test:
     name: Starlark load test

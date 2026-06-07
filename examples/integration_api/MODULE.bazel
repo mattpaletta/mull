@@ -18,6 +18,13 @@ local_path_override(
 
 bazel_dep(name = "rules_cc", version = "0.2.16")
 
+# Mull's MODULE.bazel registers its own LLVM toolchain as a dev_dependency
+# (used only when mull itself is the root). When mull is a non-root dep, that
+# registration is skipped, so the integrator is responsible for registering a
+# C++ toolchain. The auto-detected one from rules_cc is enough for this
+# example — the apt-installed clang on the CI runner takes over.
+register_toolchains("@rules_cc//cc:all")
+
 # Wire up a single LLVM version. If LLVM 19 is installed on the host, it is
 # used as-is; otherwise mull falls back to aliasing @llvm-project (see
 # docs/integration.md). The CI workflow installs LLVM 19 explicitly.

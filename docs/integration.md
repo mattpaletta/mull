@@ -31,6 +31,13 @@ After this you can depend on `@mull_llvm//:libllvm`,
 `@mull_llvm//:libclang`, `@mull_llvm//:clang`, `@mull_llvm//:clangxx`,
 and `@mull_llvm//:llvm-profdata` from anywhere in your project.
 
+> **Toolchain note.** Mull's own MODULE.bazel registers an LLVM
+> toolchain inside a `dev_dependency` block, so when mull is consumed
+> as a non-root module that registration is skipped. The integrator
+> is responsible for registering a C++ toolchain. The simplest option
+> is `register_toolchains("@rules_cc//cc:all")` to use the
+> auto-detected system compiler.
+
 ### Source fallback (LLVM not installed on the host)
 
 If you want builds to also work on machines where LLVM 21 is *not*

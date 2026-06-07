@@ -1,0 +1,31 @@
+load("@mull//:mull_test.bzl", "mull_test")
+load("@rules_cc//cc:defs.bzl", "cc_library", "cc_test")
+
+package(default_visibility = ["//visibility:private"])
+
+cc_library(
+    name = "calculator",
+    srcs = ["calculator.cpp"],
+    hdrs = ["calculator.h"],
+)
+
+# Regular sanity test. Runs as part of `bazel test //...`.
+cc_test(
+    name = "calculator_test",
+    srcs = ["calculator_test.cpp"],
+    deps = [":calculator"],
+)
+
+# Mutation test using mull. Tagged `manual` by the macro, so this only runs
+# when invoked explicitly:
+#
+#     bazel test //:calculator_mull
+mull_test(
+    name = "calculator_mull",
+    srcs = ["calculator_test.cpp"],
+    llvm_version = "19",
+    mull_config = ":mull.yml",
+    deps = [":calculator"],
+)
+
+exports_files(["mull.yml"])

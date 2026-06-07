@@ -1,0 +1,8 @@
+mutators:
+  - cxx_arithmetic
+  - cxx_relational
+  - cxx_logical
+  - cxx_boundary
+excludePaths:
+  - external
+  - bazel-out

@@ -1,0 +1,6 @@
+common --test_output=errors
+common --remote_cache_compression
+
+try-import %workspace%/../../.bazel.buildbuddy.rc
+try-import %workspace%/../../.bazel.compilation_mode.bazelrc
+try-import %workspace%/../../.bazel.build_salt.bazelrc

@@ -23,9 +23,9 @@ cc_test(
 mull_test(
     name = "calculator_mull",
     srcs = ["calculator_test.cpp"],
-    deps = [":calculator"],
     llvm_version = "19",
     mull_config = ":mull.yml",
+    deps = [":calculator"],
 )
 
 exports_files(["mull.yml"])

@@ -18,4 +18,4 @@ bool is_positive(int x) {
   return x > 0;
 }
 
-}  // namespace example
+} // namespace example

@@ -10,7 +10,6 @@ on:
       - "mull_test.bzl"
       - "examples/integration_api/**"
       - ".github/workflows/integration-api.yml"
-
 jobs:
   load-test:
     name: Starlark load test
@@ -18,7 +17,6 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v5
-
       - name: Install LLVM 19
         run: |
           wget https://apt.llvm.org/llvm.sh
@@ -26,31 +24,26 @@ jobs:
           sudo ./llvm.sh 19
           sudo apt-get install -y --no-install-recommends \
             llvm-19-dev libclang-cpp19-dev
-
       - uses: bazel-contrib/setup-bazel@0.8.5
         with:
           bazelisk-cache: true
           repository-cache: true
           disk-cache: integration-api
-
       - uses: ./.github/actions/setup-bazel-cache
         with:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           PLATFORM: ubuntu-24.04-x86_64
-
       - name: Sanity-load the new bzl entrypoints
         working-directory: examples/integration_api
         run: |
           bazelisk mod graph
           bazelisk query //...
-
   build-smoke-test:
     name: Build mull_test target (LLVM 19)
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v5
-
       - name: Install LLVM 19
         run: |
           wget https://apt.llvm.org/llvm.sh
@@ -58,25 +51,21 @@ jobs:
           sudo ./llvm.sh 19
           sudo apt-get install -y --no-install-recommends \
             llvm-19-dev libclang-cpp19-dev
-
       - uses: bazel-contrib/setup-bazel@0.8.5
         with:
           bazelisk-cache: true
           repository-cache: true
           disk-cache: integration-api-build
-
       - uses: ./.github/actions/setup-bazel-cache
         with:
           BUILDBUDDY_API_KEY: ${{ secrets.BUILDBUDDY_API_KEY }}
           PLATFORM: ubuntu-24.04-x86_64
-
       # Build the regular cc_test and the mull-instrumented cc_binary that
       # `mull_test` generates. The mull_test target itself is `manual`, so
       # it is named explicitly here.
       - name: Build calculator_test
         working-directory: examples/integration_api
         run: bazelisk build //:calculator_test
-
       - name: Build calculator_mull (instrumented binary + runner script)
         working-directory: examples/integration_api
         run: bazelisk build //:calculator_mull

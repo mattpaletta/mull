@@ -1,5 +1,3 @@
-# buildifier: disable=module-docstring
-load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
 load("//:bazel/os_detection.bzl", "is_macos", "is_redhat")
 
 # Build file used when LLVM is found locally. Mirrors the layout produced by

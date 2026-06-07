@@ -25,7 +25,7 @@
 load("@bazel_skylib//lib:shell.bzl", "shell")
 load("@rules_cc//cc:defs.bzl", "cc_binary")
 
-def _mull_test_runner_impl(ctx):
+def _mull_runner_test_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name + ".sh")
     test_binary = ctx.executable.test_binary
     mull_runner = ctx.executable.mull_runner
@@ -77,8 +77,8 @@ echo "[mull_test] Done. Report: ${{REPORT_NAME}}.sqlite"
 
     return [DefaultInfo(executable = out, runfiles = runfiles)]
 
-_mull_test_runner = rule(
-    implementation = _mull_test_runner_impl,
+_mull_runner_test = rule(
+    implementation = _mull_runner_test_impl,
     test = True,
     attrs = {
         "test_binary": attr.label(mandatory = True, executable = True, cfg = "target"),
@@ -167,7 +167,7 @@ def mull_test(
         **kwargs
     )
 
-    _mull_test_runner(
+    _mull_runner_test(
         name = name,
         test_binary = ":" + instrumented_name,
         mull_runner = mull_runner,

@@ -23,7 +23,7 @@
 #   3. Tag the resulting test as `manual` so it does not run during normal
 #      `bazel test //...` invocations.
 load("@bazel_skylib//lib:shell.bzl", "shell")
-load("@rules_cc//cc:defs.bzl", "cc_binary")
+load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 def _mull_runner_test_impl(ctx):
     out = ctx.actions.declare_file(ctx.label.name + ".sh")
@@ -152,8 +152,14 @@ def mull_test(
     if "mull" not in final_tags:
         final_tags.append("mull")
 
-    cc_binary(
-        name = instrumented_name,
+    # cc_binary doesn't accept `additional_compiler_inputs`, but cc_library
+    # does. So we compile the sources into an intermediate cc_library with the
+    # pass-plugin attached (which is where mull's IR transformations need to
+    # run), then link them into the final executable via a thin cc_binary.
+    instrumented_lib = instrumented_name + "_lib"
+
+    cc_library(
+        name = instrumented_lib,
         srcs = srcs,
         deps = (deps or []),
         copts = (copts or []) + [
@@ -162,9 +168,18 @@ def mull_test(
             "-fpass-plugin=$(execpath %s)" % plugin,
         ],
         additional_compiler_inputs = [plugin],
+        alwayslink = True,
+        linkstatic = True,
         testonly = True,
         tags = final_tags,
         **kwargs
+    )
+
+    cc_binary(
+        name = instrumented_name,
+        deps = [":" + instrumented_lib],
+        testonly = True,
+        tags = final_tags,
     )
 
     _mull_runner_test(

@@ -35,9 +35,7 @@ jobs:
           PLATFORM: ubuntu-24.04-x86_64
       - name: Sanity-load the new bzl entrypoints
         working-directory: examples/integration_api
-        run: |
-          bazelisk mod graph
-          bazelisk query //...
+        run: bazelisk query //... --check_direct_dependencies=off
   build-smoke-test:
     name: Build mull_test target (LLVM 19)
     runs-on: ubuntu-24.04

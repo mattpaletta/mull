@@ -1,0 +1,26 @@
+"""Minimal Bazel project that integrates mull via the public bzl APIs.
+
+Doubles as a CI smoke test for `mull_llvm.configure(...)` and `mull_test(...)`.
+Lives inside the mull repo and points at the parent checkout via
+`local_path_override` so it always tracks the API as it evolves.
+"""
+
+module(
+    name = "mull_integration_example",
+    version = "0.0.0",
+)
+
+bazel_dep(name = "mull", version = "0.34.0")
+local_path_override(
+    module_name = "mull",
+    path = "../..",
+)
+
+bazel_dep(name = "rules_cc", version = "0.2.16")
+
+# Wire up a single LLVM version. If LLVM 19 is installed on the host, it is
+# used as-is; otherwise mull falls back to aliasing @llvm-project (see
+# docs/integration.md). The CI workflow installs LLVM 19 explicitly.
+mull_llvm = use_extension("@mull//:mull_llvm.bzl", "mull_llvm")
+mull_llvm.configure(version = "19")
+use_repo(mull_llvm, "mull_llvm")

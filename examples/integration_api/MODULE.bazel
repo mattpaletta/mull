@@ -17,13 +17,29 @@ local_path_override(
 )
 
 bazel_dep(name = "rules_cc", version = "0.2.16")
+bazel_dep(name = "rules_rust", version = "0.68.1")
 
 # Mull's MODULE.bazel registers its own LLVM toolchain as a dev_dependency
 # (used only when mull itself is the root). When mull is a non-root dep, that
 # registration is skipped, so the integrator is responsible for registering a
 # C++ toolchain. The auto-detected one from rules_cc is enough for this
-# example — the apt-installed clang on the CI runner takes over.
+# example - the apt-installed clang on the CI runner takes over.
 register_toolchains("@rules_cc//cc:all")
+
+# rules_rust's tag attributes from non-root modules are ignored, so even
+# though mull's MODULE.bazel pins Rust 1.94.0, that doesn't propagate when
+# mull is consumed as a dep. Declare the toolchain locally so the example
+# builds mull's rust-based tools (mull-runner, mull-reporter) with a recent
+# enough rustc to compile mull's transitive crates (ruzstd 0.8.2 uses APIs
+# stabilized in Rust 1.87).
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2024",
+    versions = ["1.94.0"],
+)
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
 
 # Wire up a single LLVM version. If LLVM 19 is installed on the host, it is
 # used as-is; otherwise mull falls back to aliasing @llvm-project (see

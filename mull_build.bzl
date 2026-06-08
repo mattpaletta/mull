@@ -9,6 +9,10 @@ def mull_build(name):
             srcs = native.glob(["lib/**/*.cpp"]),
             hdrs = native.glob(["include/**/*.h"]),
             includes = ["include"],
+            # LLVM is built with -fno-rtti; match it so we don't emit RTTI
+            # references (e.g. typeinfo for llvm::CallbackVH) that the LLVM
+            # shared library does not provide. Mull itself uses no C++ RTTI.
+            copts = ["-fno-rtti"],
             deps = [
                 "@mull_irm_%s//:irm" % llvm_version,
                 "@llvm_%s//:libclang" % llvm_version,
@@ -23,6 +27,7 @@ def mull_build(name):
             name = "mull-cxx-ir-frontend-%s" % llvm_version,
             srcs = native.glob(["tools/mull-ir-frontend/*.cpp"]),
             linkshared = True,
+            copts = ["-fno-rtti"],
             # rpath $ORIGIN lets the plugin resolve its shared library deps
             # (libclang-cpp.so) from its own directory when a downstream clang
             # dlopen's it via -fpass-plugin. See the co-located genrule below.
@@ -67,6 +72,7 @@ def mull_build(name):
                 "tools/mull-cxx-frontend/src/*.h",
             ]),
             linkshared = True,
+            copts = ["-fno-rtti"],
             deps = [
                 ":libmull_%s" % llvm_version,
                 "@llvm_%s//:libclang" % llvm_version,
@@ -84,6 +90,7 @@ def mull_build(name):
         cc_binary(
             name = "mull-instrument-%s" % llvm_version,
             srcs = ["tools/mull-instrument/mull-instrument.cpp"],
+            copts = ["-fno-rtti"],
             deps = [
                 ":libmull_%s" % llvm_version,
                 "@llvm_%s//:libllvm" % llvm_version,
@@ -96,6 +103,7 @@ def mull_build(name):
     cc_binary(
         name = "mull-dump-mutators",
         srcs = ["tools/mull-dump-mutators/mull-dump-mutators.cpp"],
+        copts = ["-fno-rtti"],
         deps = [
             ":libmull_%s" % latest_llvm,
         ],

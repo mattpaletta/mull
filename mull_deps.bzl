@@ -16,6 +16,9 @@ cc_library(
         "include/**/*.h",
     ]),
     includes = ["include"],
+    # Match LLVM's -fno-rtti so we don't reference RTTI symbols the LLVM
+    # shared library doesn't provide.
+    copts = ["-fno-rtti"],
     visibility = ["//visibility:public"],
     deps = [
         "@llvm_{LLVM_VERSION}//:libllvm",

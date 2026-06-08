@@ -28,6 +28,9 @@ def mull_build(name):
                 "@llvm_%s//:libclang" % llvm_version,
             ],
             tags = ["llvm_%s" % llvm_version],
+            # Public so downstream projects can pass the plugin to clang via
+            # -fpass-plugin when integrating Mull mutation testing in Bazel.
+            visibility = ["//visibility:public"],
         )
 
         native.genrule(
@@ -35,6 +38,8 @@ def mull_build(name):
             srcs = [":mull-cxx-ir-frontend-%s" % llvm_version],
             outs = ["mull-ir-frontend-%s" % llvm_version],
             cmd = "cp $(SRCS) $(OUTS)",
+            # Public so the generated plugin file can be consumed downstream.
+            visibility = ["//visibility:public"],
         )
 
         cc_binary(

@@ -60,7 +60,11 @@ llvm.toolchain(
 )
 use_repo(llvm, "llvm_toolchain")
 
-register_toolchains("@llvm_toolchain//:all")
+# dev_dependency so this registration is skipped when Mull is consumed as a
+# dependency: @llvm_toolchain is created by the dev-only llvm extension above,
+# so registering it unconditionally would fail toolchain resolution in
+# downstream modules with "No repository visible as '@llvm_toolchain'".
+register_toolchains("@llvm_toolchain//:all", dev_dependency = True)
 
 http_archive = use_repo_rule("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 

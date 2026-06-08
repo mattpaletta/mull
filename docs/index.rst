@@ -11,6 +11,7 @@ Welcome to Mull's documentation!
    MutationTestingIntro
    Installation
    Tutorials
+   BazelMutationTesting
    SupportedMutations
    IncrementalMutationTesting
    CommandLineReference

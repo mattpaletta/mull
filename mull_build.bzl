@@ -1,5 +1,5 @@
 # buildifier: disable=module-docstring
-load("@available_llvm_versions//:mull_llvm_versions.bzl", "AVAILABLE_LLVM_VERSIONS")
+load("@available_llvm_versions//:mull_llvm_versions.bzl", "AVAILABLE_LLVM_VERSIONS", "HERMETIC_LLVM")
 load("@rules_cc//cc:defs.bzl", "cc_binary", "cc_library")
 
 def mull_build(name):
@@ -23,6 +23,10 @@ def mull_build(name):
             name = "mull-cxx-ir-frontend-%s" % llvm_version,
             srcs = native.glob(["tools/mull-ir-frontend/*.cpp"]),
             linkshared = True,
+            # rpath $ORIGIN lets the plugin resolve its shared library deps
+            # (libclang-cpp.so) from its own directory when a downstream clang
+            # dlopen's it via -fpass-plugin. See the co-located genrule below.
+            linkopts = ["-Wl,-rpath,$$ORIGIN"],
             deps = [
                 ":libmull_%s" % llvm_version,
                 "@llvm_%s//:libclang" % llvm_version,
@@ -41,6 +45,20 @@ def mull_build(name):
             # Public so the generated plugin file can be consumed downstream.
             visibility = ["//visibility:public"],
         )
+
+        # For a hermetic LLVM, the plugin's libclang-cpp.so isn't on any system
+        # path, so copy it next to the generated plugin. Combined with the
+        # plugin's rpath $ORIGIN, a downstream clang can load the plugin by
+        # staging both files (e.g. via additional_compiler_inputs) in the same
+        # directory.
+        if llvm_version in HERMETIC_LLVM:
+            native.genrule(
+                name = "mull-ir-frontend-%s-libclang" % llvm_version,
+                srcs = ["@llvm_%s//:libclang_cpp_shared" % llvm_version],
+                outs = [HERMETIC_LLVM[llvm_version]["clang_dylib"]],
+                cmd = "cp -L $(SRCS) $(OUTS)",
+                visibility = ["//visibility:public"],
+            )
 
         cc_binary(
             name = "mull-cxx-ast-frontend-%s" % llvm_version,

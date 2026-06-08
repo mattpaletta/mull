@@ -63,6 +63,12 @@ cc_library(
     deps = [":libclang_private"],
 )
 
+filegroup(
+    name = "libclang_cpp_shared",
+    srcs = ["{LIBDIR}/{LIBCLANG_CPP_DYLIB}"],
+    visibility = ["//visibility:public"],
+)
+
 native_binary(
     name = "clang",
     src = "bin/clang",

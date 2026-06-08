@@ -20,9 +20,7 @@
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Support/CommandLine.h>
 #include <llvm/Support/FileSystem.h>
-#include <llvm/Support/InitLLVM.h>
 #include <llvm/Support/SourceMgr.h>
-#include <llvm/Support/SystemUtils.h>
 #include <llvm/Support/ToolOutputFile.h>
 #include <mull/Driver.h>
 
@@ -32,10 +30,11 @@ static llvm::cl::opt<std::string> InputFile(llvm::cl::Positional, llvm::cl::desc
 static llvm::cl::opt<std::string> OutputFile("o", llvm::cl::desc("Output file (default: stdout)"),
                                              llvm::cl::value_desc("file"), llvm::cl::init("-"));
 
-static llvm::cl::opt<bool> Force("f", llvm::cl::desc("Enable binary output on terminals"));
-
 int main(int argc, char **argv) {
-  llvm::InitLLVM X(argc, argv);
+  // Note: we deliberately avoid llvm::InitLLVM here. It only installs crash
+  // signal handlers and an llvm_shutdown, neither of which this short-lived
+  // tool needs, and its symbols are not exported by the monolithic
+  // libclang-cpp.so used by hermetic LLVM releases that ship no libLLVM.so.
   llvm::cl::ParseCommandLineOptions(
       argc, argv, "Apply mull mutation instrumentation to LLVM bitcode\n");
 
@@ -58,8 +57,9 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  if (Force || !llvm::CheckBitcodeOutputToConsole(out.os()))
-    llvm::WriteBitcodeToFile(*module, out.os());
+  // Output always goes to a file (or an explicitly redirected stdout), so we do
+  // not need llvm::CheckBitcodeOutputToConsole to guard against a TTY.
+  llvm::WriteBitcodeToFile(*module, out.os());
 
   out.keep();
   return 0;

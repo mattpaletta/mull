@@ -1,5 +1,5 @@
 # buildifier: disable=module-docstring
-load("@available_llvm_versions//:mull_llvm_versions.bzl", "AVAILABLE_LLVM_VERSIONS")
+load("@available_llvm_versions//:mull_llvm_versions.bzl", "AVAILABLE_LLVM_VERSIONS", "HERMETIC_LLVM")
 load("@bazel_skylib//lib:modules.bzl", "modules")
 load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 load("@bazel_tools//tools/build_defs/repo:local.bzl", "new_local_repository")
@@ -131,26 +131,46 @@ def _mull_deps_extension(module_ctx):
                     empty_repo(name = irm_repo_name)
                     continue
 
-                libdir = "lib"
-                if is_macos(module_ctx):
-                    path = "/opt/homebrew/opt/llvm@" + version
-                elif is_redhat(module_ctx):
-                    path = "/usr"
-                    libdir = "lib64"
+                if version in HERMETIC_LLVM:
+                    # Download a self-contained LLVM (e.g. the official release)
+                    # instead of expecting it under /usr/lib/llvm-<version>.
+                    cfg = HERMETIC_LLVM[version]
+                    archive_kwargs = {}
+                    if cfg["sha256"]:
+                        archive_kwargs["sha256"] = cfg["sha256"]
+                    http_archive(
+                        name = llvm_repo_name,
+                        urls = [cfg["url"]],
+                        strip_prefix = cfg["strip_prefix"],
+                        build_file_content = LLVM_BUILD_FILE.format(
+                            LIBLLVM_DYLIB = cfg["llvm_dylib"],
+                            LIBCLANG_CPP_DYLIB = cfg["clang_dylib"],
+                            LLVM_VERSION = version,
+                            LIBDIR = "lib",
+                        ),
+                        **archive_kwargs
+                    )
                 else:
-                    path = "/usr/lib/llvm-" + version
-                llvm_dylib = _find_llvm_dylib(module_ctx, path, libdir, version)
-                clang_dylib = _find_clang_dylib(module_ctx, path, libdir, version)
-                new_local_repository(
-                    name = llvm_repo_name,
-                    path = path,
-                    build_file_content = LLVM_BUILD_FILE.format(
-                        LIBLLVM_DYLIB = llvm_dylib,
-                        LIBCLANG_CPP_DYLIB = clang_dylib,
-                        LLVM_VERSION = version,
-                        LIBDIR = libdir,
-                    ),
-                )
+                    libdir = "lib"
+                    if is_macos(module_ctx):
+                        path = "/opt/homebrew/opt/llvm@" + version
+                    elif is_redhat(module_ctx):
+                        path = "/usr"
+                        libdir = "lib64"
+                    else:
+                        path = "/usr/lib/llvm-" + version
+                    llvm_dylib = _find_llvm_dylib(module_ctx, path, libdir, version)
+                    clang_dylib = _find_clang_dylib(module_ctx, path, libdir, version)
+                    new_local_repository(
+                        name = llvm_repo_name,
+                        path = path,
+                        build_file_content = LLVM_BUILD_FILE.format(
+                            LIBLLVM_DYLIB = llvm_dylib,
+                            LIBCLANG_CPP_DYLIB = clang_dylib,
+                            LLVM_VERSION = version,
+                            LIBDIR = libdir,
+                        ),
+                    )
                 http_archive(
                     name = irm_repo_name,
                     integrity = "sha256-8pmIPDJX0cgDlNljcIcWd73Wb2WB8cgK/086RxOyqrE=",
